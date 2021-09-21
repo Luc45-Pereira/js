@@ -34,7 +34,9 @@ let perPage = 7;
 const state = {
     page: 1,
     perPage,
-    totalPage: Math.ceil(links.length / 7)
+    totalPage: Math.ceil(links.length / 7),
+
+    maxVisibleButtons: 2
 }
 
 const controls = {
@@ -58,17 +60,17 @@ const controls = {
             page = 1;
         }
 
-        state.page = page;
+        state.page = +page;
 
         if(page > state.totalPage){
-            state.page = stete.totalPage;
+            state.page = state.totalPage;
         }
     },
     createListeners(){
         html.get('.first').addEventListener('click', () => {
             controls.goTo(1)
             update()
-           
+            
         })
 
         html.get('.last').addEventListener('click', () => {
@@ -80,13 +82,13 @@ const controls = {
         html.get('.next').addEventListener('click', () => {
             controls.next()
             update()
-         
+            
         })
 
         html.get('.prev').addEventListener('click', () => {
             controls.prev()
             update()
-     
+            
         })
     }
 
@@ -153,22 +155,60 @@ const list = {
 }
 
 const buttons = {
-    create(){
+    create(number){
+        const button = document.createElement('div')
 
+        button.innerHTML = number;
+
+        if(state.page == number){
+            button.classList.add('active')
+        }
+
+        button.addEventListener('click', (event) => {
+            const page = event.target.innerText
+
+            controls.goTo(page)
+            update()
+        })
+
+        html.get('.pagination .numbers').appendChild(button)
     },
     update(){
-        
+        html.get('.pagination .numbers').innerHTML = ""
+
+        const {maxLeft, maxRight} = buttons.calculateMaxVisible()
+
+        for(let page = maxLeft; page <= maxRight; page++){
+            buttons.create(page)
+        }
+    },
+    calculateMaxVisible(){
+        const { maxVisibleButtons } = state
+        let maxLeft = (state.page - Math.floor(maxVisibleButtons/2))
+        let maxRight = (state.page + Math.floor(maxVisibleButtons/2))
+
+        if (maxLeft<1){
+            maxLeft = 1
+            maxRight = maxVisibleButtons
+        }
+        if(maxRight > state.totalPage){
+            maxLeft = state.totalPage - (maxVisibleButtons - 1)
+            maxRight = state.totalPage
+            if(maxLeft<1) maxLeft = 1
+        }
+
+        return{maxLeft, maxRight}
     }
 }
 
 function init(){
-    list.update()
-
+    update()
     controls.createListeners()
 }
 
 function update(){
     list.update()
+    buttons.update()
 }
 
 init()
